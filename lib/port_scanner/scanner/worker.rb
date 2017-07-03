@@ -1,9 +1,11 @@
+require 'timeout'
+
 module PortScanner
   class Scanner
     class Worker
-      Work = Struct.new(:host, :port)
+      Work = Struct.new(:host, :port, :protocol)
 
-      def initialize(service_mapper: , input_queue: , output_queue: , connect_timeout: 1.0)
+      def initialize(service_mapper: , input_queue: , output_queue: , connect_timeout: 0.01)
         @service_mapper = service_mapper
         @input_queue = input_queue
         @output_queue = output_queue
@@ -35,6 +37,13 @@ module PortScanner
       end
 
       def work(input)
+        case input.protocol
+        when 'tcp'
+          scan_tcp(input)
+        end
+      end
+
+      def scan_tcp(input)
         s = Socket.new(Socket::AF_INET, Socket::SOCK_STREAM)
         begin
           Timeout.timeout(@connect_timeout) do
@@ -42,7 +51,10 @@ module PortScanner
             svc_name = @service_mapper.name(protocol: 'tcp', port: input.port)
             OpenPort.new(input.host, input.port, svc_name)
           end
-        rescue *[Timeout::Error, Errno::ECONNREFUSED, Errno::EHOSTUNREACH] => e
+        rescue *[Timeout::Error, Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ENETUNREACH] => e
+          nil
+        rescue => e
+          puts "ERROR: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
           nil
         end
       end

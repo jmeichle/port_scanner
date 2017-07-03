@@ -32,7 +32,7 @@ describe PortScanner::Scanner::Worker do
 
     context 'Connection Errors / Closed Port behavior' do
       before(:each) do
-        input_queue.push(described_class::Work.new('127.0.0.1', 22))
+        input_queue.push(described_class::Work.new('127.0.0.1', 22, 'tcp'))
         input_queue.push('kill_thread')    
       end
 
@@ -40,12 +40,16 @@ describe PortScanner::Scanner::Worker do
         expect(socket).to receive(:connect).and_raise(Errno::ECONNREFUSED)
       end
 
+      it 'Returns no result for ENETUNREACH' do        
+        expect(socket).to receive(:connect).and_raise(Errno::ENETUNREACH)
+      end
+
       it 'Returns no result for EHOSTUNREACH' do        
         expect(socket).to receive(:connect).and_raise(Errno::EHOSTUNREACH)
       end
 
       it 'Returns no result for connection timeouts with the default timeout value (1.0)' do        
-        expect(Timeout).to receive(:timeout).with(1.0).and_call_original
+        expect(Timeout).to receive(:timeout).with(0.01).and_call_original
         expect(socket).to receive(:connect).and_raise(Timeout::Error)
       end
 
@@ -59,7 +63,7 @@ describe PortScanner::Scanner::Worker do
     end
 
     it 'honors the optional connect_timeout value' do 
-      input_queue.push(described_class::Work.new('127.0.0.1', 22))
+      input_queue.push(described_class::Work.new('127.0.0.1', 22, 'tcp'))
       input_queue.push('kill_thread')
       subject = described_class.new(service_mapper: service_mapper, input_queue: input_queue, output_queue: output_queue, connect_timeout: 1337.0)
       expect(Timeout).to receive(:timeout).with(1337.0)
@@ -69,7 +73,7 @@ describe PortScanner::Scanner::Worker do
   end
 
   it 'Returns an OpenPort object if the port connects' do
-    input_queue.push(described_class::Work.new('127.0.0.1', 22))
+    input_queue.push(described_class::Work.new('127.0.0.1', 22, 'tcp'))
     input_queue.push('kill_thread')
     expect(socket).to receive(:connect)
     expect(service_mapper).to receive(:name).with(protocol: 'tcp', port: 22).and_return('ssh')
