@@ -16,8 +16,8 @@ module PortScanner
     end
 
     def setup
-      start_workers
       @cidr.setup
+      start_workers
     end
 
     def results
@@ -26,7 +26,11 @@ module PortScanner
       @cidr.results
     end
 
-    def queue_size
+    def host_count
+      @cidr.host_count
+    end
+
+    def host_queue_size
       @input_queue.size
     end
 

@@ -7,17 +7,15 @@ describe PortScanner::Cidr do
 
   context 'Work Creation' do
     it 'Enqueues a work object for each host, protocol, and port for the arguments' do
-      expect(work_class).to receive(:new).with('127.0.0.1', 20, 'tcp').and_return(work_double)
-      expect(work_class).to receive(:new).with('127.0.0.1', 21, 'tcp').and_return(work_double)
-      expect(work_class).to receive(:new).with('127.0.0.1', 22, 'tcp').and_return(work_double)
-      expect(input_queue).to receive(:<<).exactly(3).times.with(work_double)
+      expect(work_class).to receive(:new).with('127.0.0.1', 20..22, 'tcp').and_return(work_double)
+      expect(input_queue).to receive(:<<).with(work_double)
       subject.new(input_queue: input_queue, output_queue: output_queue, cidr: '127.0.0.1', port_range: (20..22), protocols: ['tcp']).setup
     end
 
     it 'Accepts CIDR ranges and parses them accordingly' do
-      expect(work_class).to receive(:new).with('192.168.0.21', 22, 'tcp').and_return(work_double)
-      expect(work_class).to receive(:new).with('192.168.0.22', 22, 'tcp').and_return(work_double)
-      expect(work_class).to receive(:new).with('192.168.0.23', 22, 'tcp').and_return(work_double)
+      expect(work_class).to receive(:new).with('192.168.0.21', 22..22, 'tcp').and_return(work_double)
+      expect(work_class).to receive(:new).with('192.168.0.22', 22..22, 'tcp').and_return(work_double)
+      expect(work_class).to receive(:new).with('192.168.0.23', 22..22, 'tcp').and_return(work_double)
       expect(input_queue).to receive(:<<).exactly(3).times.with(work_double)
       subject.new(input_queue: input_queue, output_queue: output_queue, cidr: '192.168.0.20/30', port_range: (22..22), protocols: ['tcp']).setup
     end

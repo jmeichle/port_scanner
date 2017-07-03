@@ -11,6 +11,7 @@ module PortScanner
       @input_queue = input_queue
       @output_queue = output_queue
       @protocols = protocols
+      @host_count = 0
       @results = []
     end
 
@@ -23,6 +24,10 @@ module PortScanner
       @results
     end
 
+    def host_count
+      @host_count
+    end
+
     private
 
     def enqueue_work
@@ -32,9 +37,8 @@ module PortScanner
       @cidr.each do |host|
         unless (host.network?)
           @protocols.each do |protocol|
-            @port_range.each do |port|
-              @input_queue << PortScanner::Scanner::Worker::Work.new(host.address, port, protocol)
-            end
+            @host_count = @host_count + 1
+            @input_queue << PortScanner::Scanner::Worker::Work.new(host.address, @port_range, protocol)
           end
         end
       end

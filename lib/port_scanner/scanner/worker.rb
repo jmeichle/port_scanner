@@ -3,7 +3,7 @@ require 'timeout'
 module PortScanner
   class Scanner
     class Worker
-      Work = Struct.new(:host, :port, :protocol)
+      Work = Struct.new(:host, :port_range, :protocol)
 
       def initialize(service_mapper: , input_queue: , output_queue: , connect_timeout: 0.01)
         @service_mapper = service_mapper
@@ -30,8 +30,7 @@ module PortScanner
           input = @input_queue.pop
           break if input == 'kill_thread'
           if input.is_a?(Work)
-            output = work(input)
-            @output_queue << output unless output.nil?
+            work(input)
           end
         end
       end
@@ -39,22 +38,27 @@ module PortScanner
       def work(input)
         case input.protocol
         when 'tcp'
-          scan_tcp(input)
+          results = []
+          begin
+            input.port_range.each do |port|
+              output = scan_tcp(input.host, port)
+              results << output unless output.nil?
+            end
+          rescue *[Errno::EHOSTUNREACH, Errno::ENETUNREACH]
+          end
+          @output_queue << [input, results]
         end
       end
 
-      def scan_tcp(input)
+      def scan_tcp(host, port)
         s = Socket.new(Socket::AF_INET, Socket::SOCK_STREAM)
         begin
           Timeout.timeout(@connect_timeout) do
-            s.connect(Socket.pack_sockaddr_in(input.port, input.host))
-            svc_name = @service_mapper.name(protocol: 'tcp', port: input.port)
-            OpenPort.new(input.host, input.port, svc_name)
+            s.connect(Socket.pack_sockaddr_in(port, host))
+            svc_name = @service_mapper.name(protocol: 'tcp', port: port)
+            OpenPort.new(host, port, svc_name)
           end
-        rescue *[Timeout::Error, Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ENETUNREACH] => e
-          nil
-        rescue => e
-          puts "ERROR: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}"
+        rescue *[Timeout::Error, Errno::ECONNREFUSED] => e
           nil
         end
       end

@@ -31,8 +31,9 @@ describe PortScanner::Scanner::Worker do
     end
 
     context 'Connection Errors / Closed Port behavior' do
+      let(:work) { described_class::Work.new('127.0.0.1', 22..22, 'tcp') }
       before(:each) do
-        input_queue.push(described_class::Work.new('127.0.0.1', 22, 'tcp'))
+        input_queue.push(work)
         input_queue.push('kill_thread')    
       end
 
@@ -56,14 +57,13 @@ describe PortScanner::Scanner::Worker do
       after(:each) do
         subject.run
         subject.join
-        expect{
-          output_queue.pop(non_block: true)
-        }.to raise_error(ThreadError, /queue empty/)
+        result = output_queue.pop(non_block: true)
+        expect(result).to eq([work, []])  
       end
     end
 
     it 'honors the optional connect_timeout value' do 
-      input_queue.push(described_class::Work.new('127.0.0.1', 22, 'tcp'))
+      input_queue.push(described_class::Work.new('127.0.0.1', 22..22, 'tcp'))
       input_queue.push('kill_thread')
       subject = described_class.new(service_mapper: service_mapper, input_queue: input_queue, output_queue: output_queue, connect_timeout: 1337.0)
       expect(Timeout).to receive(:timeout).with(1337.0)
@@ -73,17 +73,24 @@ describe PortScanner::Scanner::Worker do
   end
 
   it 'Returns an OpenPort object if the port connects' do
-    input_queue.push(described_class::Work.new('127.0.0.1', 22, 'tcp'))
+    work = described_class::Work.new('127.0.0.1', 22..22, 'tcp')
+    input_queue.push(work)
     input_queue.push('kill_thread')
     expect(socket).to receive(:connect)
     expect(service_mapper).to receive(:name).with(protocol: 'tcp', port: 22).and_return('ssh')
     subject.run
     subject.join
     result = output_queue.pop
-    expect(result).to be_a(PortScanner::Scanner::OpenPort)
-    expect(result.host).to eq('127.0.0.1')
-    expect(result.port).to eq(22)
-    expect(result.service).to eq('ssh')
+
+    expect(result).to be_a(Array)
+    expect(result.first).to eq(work)
+    open_ports = result.last
+    expect(open_ports).to be_a(Array)
+    expect(open_ports.size).to eq(1)
+    expect(open_ports.first).to be_a(PortScanner::Scanner::OpenPort)
+    expect(open_ports.first.host).to eq('127.0.0.1')
+    expect(open_ports.first.port).to eq(22)
+    expect(open_ports.first.service).to eq('ssh')
   end
 
 end
