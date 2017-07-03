@@ -11,10 +11,5 @@ module PortScanner
 
     end
 
-    desc 'pry', 'Run the pry console'
-    def pry
-      binding.pry
-    end
-
   end
 end
