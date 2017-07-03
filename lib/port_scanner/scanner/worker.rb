@@ -19,6 +19,10 @@ module PortScanner
         end
       end
 
+      def alive?
+        @thread.alive?
+      end
+
       def join
         @thread.join
       end
@@ -56,7 +60,7 @@ module PortScanner
           Timeout.timeout(@connect_timeout) do
             s.connect(Socket.pack_sockaddr_in(port, host))
             svc_name = @service_mapper.name(protocol: 'tcp', port: port)
-            OpenPort.new(host, port, svc_name)
+            OpenPort.new(host, port, 'tcp', svc_name)
           end
         rescue *[Timeout::Error, Errno::ECONNREFUSED] => e
           nil

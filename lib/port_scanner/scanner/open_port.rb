@@ -5,14 +5,15 @@ module PortScanner
     class OpenPort
       attr_reader :host, :port, :service
 
-      def initialize(host, port, service)
+      def initialize(host, port, protocol, service)
         @host = host
         @port = port
+        @protocol = protocol
         @service = service
       end
 
       def to_s
-        log = "#{@host}:#{@port}"
+        log = "#{@protocol} #{@host}:#{@port}"
         log = log + " (#{@service})" unless @service.nil?
         log
       end

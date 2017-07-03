@@ -13,17 +13,30 @@ module PortScanner
       @service_mapper = ServiceMapper.new
       @port_range = port_range
       @cidr = Cidr.new(cidr: cidr, port_range: @port_range, input_queue: @input_queue, output_queue: @output_queue)
+      @results = []
     end
 
     def setup
-      @cidr.setup
       start_workers
+      @cidr.setup
+      @worker_count.times.each{ @input_queue << 'kill_thread' }
     end
 
     def results
-      @worker_count.times.each{ @input_queue << 'kill_thread' }
-      join_workers
-      @cidr.results
+      loop do
+        begin
+          loop do
+            result = @output_queue.pop(non_block: true)
+            @results << result
+            yield result
+          end
+        rescue ThreadError => e
+          raise unless e.message == 'queue empty'
+        end
+        sleep 1
+        break if @workers.map {|w| w.alive?}.none?
+      end
+      @results
     end
 
     def host_count

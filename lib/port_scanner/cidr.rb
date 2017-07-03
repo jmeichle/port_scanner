@@ -12,16 +12,10 @@ module PortScanner
       @output_queue = output_queue
       @protocols = protocols
       @host_count = 0
-      @results = []
     end
 
     def setup
       enqueue_work
-    end
-
-    def results
-      consume_results
-      @results
     end
 
     def host_count
@@ -41,16 +35,6 @@ module PortScanner
             @input_queue << PortScanner::Scanner::Worker::Work.new(host.address, @port_range, protocol)
           end
         end
-      end
-    end
-
-    def consume_results
-      begin
-        loop do
-          @results << @output_queue.pop(non_block: true)
-        end
-      rescue ThreadError => e
-        raise unless e.message == 'queue empty'
       end
     end
 
