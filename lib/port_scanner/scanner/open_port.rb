@@ -1,5 +1,7 @@
-require 'socket'
 
+# This class represents an open port on a host,
+# and provides a convenience method for displaying
+# the port
 module PortScanner
   class Scanner
     class OpenPort

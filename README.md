@@ -1,35 +1,78 @@
-# PortScanner
+# Ruby PortScanner
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/port_scanner`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+This is a ruby based port scanner.
 
 ## Installation
 
-Add this line to your application's Gemfile:
+This program was written using ruby `2.3.1`, but should work on older versions. To use it:
 
-```ruby
-gem 'port_scanner'
-```
+Clone the repo, and then execute:
 
-And then execute:
+    $ bundle install
 
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install port_scanner
+If bundler is not available, install it with `gem install bundler`.
 
 ## Usage
 
-TODO: Write usage instructions here
+The tool is exposed via the `bin/port-scan` Thor binary. It has a single task, `scan`. The method docs are shown here:
+
+```
+jmeichle@jkm-desktop:~/port_scanner$ ruby bin/port-scan help scan
+Usage:
+  port-scan scan -c, --cidr=CIDR
+
+Options:
+  -c, --cidr=CIDR         # The CIDR range to scan to scan
+  -r, [--ports=PORTS]     # The port range. This option supports multiple port numbers, and ranges (number-number) as CSV. example: 80,443,1000-1500
+                          # Default: 1-65535
+  -w, [--worker-count=N]  # The number of scanner threads to run
+                          # Default: 5
+
+Perform a TCP based port scan of the provided CIDR range and port range.
+```
+## Overview
+
+The scanner operates in a threaded model. The worker threads operate on a host within the network range. Within each host, ports are scanned sequentially.
+
+If a host is unreachable, or a network is unreachable, the remaining ports for the host are not scanned to save resources.
+
+## Next steps
+
+Investigate if having a separate threadpool for scanning blocks of ports on each host would help performance. There is an overhead with ruby queues, but the next step of slicing each per-host port range might help.
+
+## Examples
+
+* `ruby bin/port-scan scan -c 127.0.0.1` 
+
+Scans all ports on localhost. Example output:
+
+```
+jmeichle@jkm-desktop:~/port_scanner$
+tcp 127.0.0.1:22 (ssh)
+tcp 127.0.0.1:111 (sunrpc)
+tcp 127.0.0.1:631 (ipp)
+tcp 127.0.0.1:3306 (mysql)
+tcp 127.0.0.1:33349 (unknown)
+tcp 127.0.0.1:34062 (unknown)
+tcp 127.0.0.1:34491 (unknown)
+tcp 127.0.0.1:45666 (unknown)
+tcp 127.0.0.1:55526 (unknown)
+```
+
+This will scan all ports by default
+
+* `ruby bin/port-scan scan -c 192.168.0.1/24 -r 1-1024 -w 10` 
+
+This will scan the 192.168.0.1/24 range, and only scan ports 1 through 1024. It will also use 10 threads for scanning as opposed to the default of 32 threads.
+
+* `ruby bin/port-scan scan -c 192.168.0.1/24 -r 22,25,80,443,8080`
+
+This will also scan the 192.168.0.1/24 range, but only for ports 22, 25, 80, 443, and 8080, using the default number of threads (32).
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+After checking out the repo and running `bundle install`, unit tests can be ran via `rake spec`. Coverage reports will be written to `coverage/index.html`.
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/port_scanner.
+Bug reports and pull requests are welcome on GitHub at https://github.com/jmeichle/port_scanner.

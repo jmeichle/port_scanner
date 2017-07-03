@@ -17,6 +17,7 @@ describe PortScanner::Scanner::Worker do
     input_queue.push('kill_thread')
     subject.run
     subject.join
+    expect(subject.alive?).to eq(false)
   end
 
   context 'host+port scanning on queue events' do

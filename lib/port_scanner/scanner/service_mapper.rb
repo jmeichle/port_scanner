@@ -1,3 +1,7 @@
+# This class parses /etc/services and provides a method
+# for looking up the name of a service given the protocol
+# and port number
+
 module PortScanner
   class Scanner
     class ServiceMapper
