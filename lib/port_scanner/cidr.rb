@@ -5,9 +5,9 @@ module PortScanner
 
     # This class parses a CIDR range, submits ports to scan to the work queue
     # and handles results
-    def initialize(cidr: , port_range: , input_queue: , output_queue: , protocols: ['tcp'])
+    def initialize(cidr: , ports: , input_queue: , output_queue: , protocols: ['tcp'])
       @cidr = IPAddress.parse(cidr)
-      @port_range = port_range
+      @ports = ports
       @input_queue = input_queue
       @output_queue = output_queue
       @protocols = protocols
@@ -32,7 +32,7 @@ module PortScanner
         unless (host.network?)
           @protocols.each do |protocol|
             @host_count = @host_count + 1
-            @input_queue << PortScanner::Scanner::Worker::Work.new(host.address, @port_range, protocol)
+            @input_queue << PortScanner::Scanner::Worker::Work.new(host.address, @ports, protocol)
           end
         end
       end

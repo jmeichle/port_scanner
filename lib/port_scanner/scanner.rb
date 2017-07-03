@@ -5,14 +5,14 @@ require "port_scanner/scanner/worker"
 module PortScanner
   class Scanner
 
-    def initialize(cidr: , port_range: , worker_count: 5)
+    def initialize(cidr: , ports: , worker_count: 5)
       @workers = []
       @worker_count = worker_count
       @input_queue = Queue.new
       @output_queue = Queue.new
       @service_mapper = ServiceMapper.new
-      @port_range = port_range
-      @cidr = Cidr.new(cidr: cidr, port_range: @port_range, input_queue: @input_queue, output_queue: @output_queue)
+      @ports = ports
+      @cidr = Cidr.new(cidr: cidr, ports: @ports, input_queue: @input_queue, output_queue: @output_queue)
       @results = []
     end
 

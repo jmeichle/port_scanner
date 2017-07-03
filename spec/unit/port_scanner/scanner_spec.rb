@@ -15,15 +15,13 @@ describe PortScanner::Scanner do
     it 'Defaults to 5 workers' do
       expect(PortScanner::Scanner::Worker).to receive(:new).exactly(5).times.and_return(worker)
       expect(worker).to receive(:run).exactly(5).times
-      subject.new(cidr: '127.0.0.1', port_range: (20..25)).setup
+      subject.new(cidr: '127.0.0.1', ports: (20..25)).setup
     end
 
     it 'Accepts a worker_count for the number of workers' do
       expect(PortScanner::Scanner::Worker).to receive(:new).exactly(13).times.and_return(worker)
       expect(worker).to receive(:run).exactly(13).times
-      subject.new(cidr: '127.0.0.1', port_range: (20..25), worker_count: 13).setup
+      subject.new(cidr: '127.0.0.1', ports: (20..25), worker_count: 13).setup
     end
-
   end
-
 end

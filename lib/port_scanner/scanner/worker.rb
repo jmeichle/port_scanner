@@ -3,7 +3,7 @@ require 'timeout'
 module PortScanner
   class Scanner
     class Worker
-      Work = Struct.new(:host, :port_range, :protocol)
+      Work = Struct.new(:host, :ports, :protocol)
 
       def initialize(service_mapper: , input_queue: , output_queue: , connect_timeout: 0.01)
         @service_mapper = service_mapper
@@ -44,7 +44,7 @@ module PortScanner
         when 'tcp'
           results = []
           begin
-            input.port_range.each do |port|
+            input.ports.each do |port|
               output = scan_tcp(input.host, port)
               results << output unless output.nil?
             end
