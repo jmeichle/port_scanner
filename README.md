@@ -47,7 +47,7 @@ Investigate if having a separate threadpool for scanning blocks of ports on each
 Scans all ports on localhost. Example output:
 
 ```
-jmeichle@jkm-desktop:~/port_scanner$
+jmeichle@jkm-desktop:~/port_scanner$ ruby bin/port-scan scan -c 127.0.0.1
 tcp 127.0.0.1:22 (ssh)
 tcp 127.0.0.1:111 (sunrpc)
 tcp 127.0.0.1:631 (ipp)
